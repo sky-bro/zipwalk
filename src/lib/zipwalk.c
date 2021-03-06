@@ -41,3 +41,61 @@ unsigned long my_inflate(FILE* fin, FILE* fout, unsigned char *src, unsigned lon
     (void)inflateEnd(&strm);
     return len_in;
 }
+
+#define BUF_SIZE 1024
+unsigned char buf[BUF_SIZE];
+int next_header(FILE* fin) {
+    int sz = 0;
+    int i = 0;
+    while (1) {
+        if (sz - i < 4) {
+            fseek(fin, i-sz, SEEK_CUR); // seek back
+            sz = fread(buf, sizeof(unsigned char), BUF_SIZE, fin);
+            if (sz < 4) break;
+            i = 0;
+        }
+        if (buf[i] == 'P' && buf[i+1] == 'K') {
+            if (buf[i+2] == 0x01 && buf[i+3] == 0x02) { // Central directory file header
+                fseek(fin, i-sz, SEEK_CUR);
+                return CDFH;
+            }
+            if (buf[i+2] == 0x03 && buf[i+3] == 0x04) { // Local file header
+                fseek(fin, i-sz, SEEK_CUR);
+                return LFH;
+            }
+            if (buf[i+2] == 0x05 && buf[i+3] == 0x06) { // End of central directory
+                fseek(fin, i-sz, SEEK_CUR);
+                return EOCD;
+            }
+            if (buf[i+2] == 0x07 && buf[i+3] == 0x08) { // Optional data descriptor
+                fseek(fin, i-sz, SEEK_CUR);
+                return ODD;
+            }
+        }
+        ++i;
+    }
+    return 0;
+}
+
+void parse_CDFH(FILE* fin) {
+
+}
+
+#define src_len 1024
+unsigned char src[src_len];
+#define dst_len 1024
+unsigned char dst[dst_len];
+/**
+ * parse header information, and save files if save_file is non-zero
+ */
+void parse_LFH(FILE* fin, int save_file) {
+    
+}
+
+void parse_EOCD(FILE* fin) {
+
+}
+
+void parse_ODD(FILE* fin) {
+
+}

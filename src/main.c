@@ -21,9 +21,10 @@ void printUsage() {
   printf("Usage: %s [-vh] [-t target_path] -f <zip_path>\n", program_name);
 }
 
-const char *usage = "%s -vhtf\n";
+FILE* fin = NULL;
+int save_file = 0; // will save files or just extract headers
 
-int main(int argc, char *const argv[]) {
+int parse_args(int argc, char *const argv[]) {
   program_name = argv[0];
   // opterr = 0;
   int c;
@@ -47,14 +48,12 @@ int main(int argc, char *const argv[]) {
         break;
       case 'h':
       default:
-        printUsage();
-        return 0;
+        return 1;
     }
     
   }
   if (!zip_path) {
-    printUsage();
-    return 0;
+    return 1;
   }
 
   struct stat statbuf;
@@ -66,8 +65,8 @@ int main(int argc, char *const argv[]) {
     fprintf(stderr, "%s is not a regular file.\n", zip_path);
     return 1;
   }
-  FILE* fp = fopen(zip_path, "rb");
-  if (!fp) {
+  fin = fopen(zip_path, "rb");
+  if (!fin) {
     perror("open zip_path error");
     return 1;
   }
@@ -78,11 +77,37 @@ int main(int argc, char *const argv[]) {
     p[1] = 0;
     chdir(zip_path);
   }
+}
 
-  fseek(fp, 0, SEEK_END);
-  printf("file size: %ld bytes\n", ftell(fp));
-  rewind(fp);
+int main(int argc, char *const argv[]) {
+  if (parse_args(argc, argv)) {
+    printUsage();
+    return 0;
+  }
 
-  // system("pwd");
+  fseek(fin, 0, SEEK_END);
+  printf("[*] file size: %ld bytes\n", ftell(fin));
+  rewind(fin);
+
+  int ret;
+  while (ret = next_header(fin)) {
+    switch (ret) {
+    case CDFH: // Central directory file header
+      parse_CDFH(fin);
+      break;
+    case LFH: // Local file header
+      parse_LFH(fin, save_file);
+      break;
+    case EOCD: // End of central directory
+      parse_EOCD(fin);
+      break;
+    case ODD: // Optional data descriptor
+      parse_ODD(fin);
+      break;
+    default:
+      fprintf(stderr, "[-] unknown zip header type: %d\n", ret);
+      break;
+    }
+  }
   return 0;
 }
