@@ -1,0 +1,2 @@
+#define VERSION_MAJOR @zipwalk_VERSION_MAJOR@
+#define VERSION_MINOR @zipwalk_VERSION_MINOR@
