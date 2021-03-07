@@ -114,7 +114,10 @@ int next_header(FILE* fin) {
 }
 
 void parse_CDFH(FILE* fin) {
-
+    u_int32_t dw;
+    long pos = ftell(fin);
+    if (getdword(fin, &dw)) return;
+    printf("[+] Central Directory File Header (%#X) at offset %#X:\n", dw, pos);
 }
 
 #define src_len 1024
@@ -198,7 +201,33 @@ void parse_LFH(FILE* fin, int save_file) {
 
 void parse_EOCD(FILE* fin) {
     u_int32_t dw;
-
+    u_int16_t w, comment_len;
+    long pos = ftell(fin);
+    if (getdword(fin, &dw)) return;
+    printf("[+] End of Central Directory Record (%#X) at offset %#X:\n", dw, pos);
+    if (getword(fin, &w)) return;
+    printf("\tNumber of this disk: %d\n", w);
+    if (getword(fin, &w)) return;
+    printf("\tDisk where central directory starts: %d\n", w);
+    if (getword(fin, &w)) return;
+    printf("\tNumber of central directory records on this disk: %d\n", w);
+    if (getword(fin, &w)) return;
+    printf("\tTotal number of central directory records: %d\n", w);
+    if (getdword(fin, &dw)) return;
+    printf("\tSize of central directory (bytes): %d\n", dw);
+    if (getdword(fin, &dw)) return;
+    printf("\tOffset of start of central directory: %#X\n", dw);
+    if (getword(fin, &comment_len)) return;
+    printf("\tComment length: %d\n", comment_len);
+    if (comment_len == 0) return;
+    char *comment = malloc(comment_len+1);
+    int sz = fread(comment, sizeof(char), comment_len, fin);
+    if (sz == comment_len) {
+        comment[comment_len] = 0;
+        printf("\tComment: %s\n", comment);
+    }
+    free(comment);
+    comment = NULL;
 }
 
 void parse_ODD(FILE* fin) {
