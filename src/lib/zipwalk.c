@@ -115,9 +115,69 @@ int next_header(FILE* fin) {
 
 void parse_CDFH(FILE* fin) {
     u_int32_t dw;
+    u_int16_t w, method, name_len, extra_len, comment_len;
+    char *filename = NULL;
     long pos = ftell(fin);
     if (getdword(fin, &dw)) return;
     printf("[+] Central Directory File Header (%#X) at offset %#X:\n", dw, pos);
+    if (getword(fin, &w)) return;
+    printf("\tVersion made by: %#X\n", w);
+    if (getword(fin, &w)) return;
+    printf("\tVersion needed to extract (minimum): %#X\n", w);
+    if (getword(fin, &w)) return;
+    printf("\tgeneral purpose bit flag: %#X\n", w);
+    if (getword(fin, &method)) return;
+    printf("\tcompression method: %d\n", method);
+    // TODO: human readable time & date, set file time & date
+    if (getword(fin, &w)) return;
+    printf("\tFile last modification time: %d\n", w);
+    if (getword(fin, &w)) return;
+    printf("\tFile last modification date: %d\n", w);
+    if (getdword(fin, &dw)) return;
+    printf("\tCRC-32 of uncompressed data: %#X\n", dw);
+    if (getdword(fin, &dw)) return;
+    printf("\tCompressed size: %u byte(s)\n", dw);
+    if (getdword(fin, &dw)) return;
+    printf("\tUncompressed size: %u byte(s)\n", dw);
+    if (getword(fin, &name_len)) return;
+    printf("\tFile name length: %d\n", name_len);
+    if (getword(fin, &extra_len)) return;
+    printf("\tExtra field length: %d\n", extra_len);
+    if (getword(fin, &comment_len)) return;
+    printf("\tComment length: %d\n", comment_len);
+    if (getword(fin, &w)) return;
+    printf("\tDisk number where file starts: %d\n", w);
+    if (getword(fin, &w)) return;
+    printf("\tInternal file attributes: %#X\n", w);
+    if (getdword(fin, &dw)) return;
+    printf("\tExternal file attributes: %#X\n", dw);
+    if (getdword(fin, &dw)) return;
+    printf("\tRelative offset of local file header: %#X\n", dw);
+    if (name_len == 0) return;
+    // ignore extra field for now
+    filename = malloc(name_len+1);
+    int sz = fread(filename, sizeof(char), name_len, fin);
+    if (sz != name_len || filename[0] == '/') { // filename cannot start with '/'
+        free(filename);
+        filename = NULL;
+        return;
+    }
+    filename[name_len] = 0;
+    printf("\tFile name: %s\n", filename);
+    free(filename);
+    filename = NULL;
+    // ignore extra filed for now, skip extra_len bytes
+    fseek(fin, extra_len, SEEK_CUR);
+    printf("\tExtra field: %d byte(s) skipped\n", extra_len);
+    if (comment_len == 0) return;
+    char *comment = malloc(comment_len+1);
+    sz = fread(comment, sizeof(char), comment_len, fin);
+    if (sz == comment_len) {
+        comment[comment_len] = 0;
+        printf("\tComment: %s\n", comment);
+    }
+    free(comment);
+    comment = NULL;
 }
 
 #define src_len 1024
@@ -155,7 +215,7 @@ void parse_LFH(FILE* fin, int save_file) {
     if (getword(fin, &name_len)) return;
     printf("\tFile name length: %d\n", name_len);
     if (getword(fin, &extra_len)) return;
-    printf("\tExtra field length: %d\n", name_len);
+    printf("\tExtra field length: %d\n", extra_len);
     if (name_len == 0) return;
     // ignore extra field for now
     filename = malloc(name_len+1);
@@ -174,18 +234,17 @@ void parse_LFH(FILE* fin, int save_file) {
             save_file = 0; // no save file for a folder
         } else {
             fout = fopen(filename, "wb");
-            free(filename);
-            filename = NULL;
             if (!fout) {
                 // will fail when folders not created
                 perror("[-] fail to open file");
+                free(filename);
+                filename = NULL;
                 return;
             }
         }
-    } else {
-        free(filename);
-        filename = NULL;
     }
+    free(filename);
+    filename = NULL;
     // ignore extra filed for now, skip extra_len bytes
     fseek(fin, extra_len, SEEK_CUR);
     printf("\tExtra field: %d byte(s) skipped\n", extra_len);
