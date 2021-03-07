@@ -74,6 +74,7 @@ unsigned long my_inflate(FILE* fin, FILE* fout, unsigned char *src, unsigned lon
     }
     printf("[+] %lu bytes inflated to %lu bytes\n", len_in, len_out);
     (void)inflateEnd(&strm);
+    fseek(fin, -(len_in + strm.avail_in), SEEK_CUR);
     return len_in;
 }
 
