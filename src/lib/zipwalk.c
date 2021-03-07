@@ -196,9 +196,19 @@ void parse_LFH(FILE* fin, int save_file) {
 }
 
 void parse_EOCD(FILE* fin) {
+    u_int32_t dw;
 
 }
 
 void parse_ODD(FILE* fin) {
-
+    u_int32_t dw;
+    long pos = ftell(fin);
+    if (getdword(fin, &dw)) return;
+    printf("[+] Optional Data Descriptor (%#X) at offset %#X:\n", dw, pos);
+    if (getdword(fin, &dw)) return;
+    printf("\tCRC-32 of uncompressed data: %#X\n", dw);
+    if (getdword(fin, &dw)) return;
+    printf("\tCompressed size: %u byte(s)\n", dw);
+    if (getdword(fin, &dw)) return;
+    printf("\tUncompressed size: %u byte(s)\n", dw);
 }
