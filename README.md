@@ -5,7 +5,7 @@
 ```shell
 mkdir build
 cd build
-cmake .../src
+cmake ../src
 make
 ```
 
@@ -14,13 +14,16 @@ make
 * `zipwalk`: `./zipwalk -f ../samples/123.zip`
 * `test-my_inflate`: `./test/test-my_inflate ../samples/123.deflate 123.txt`
 
+## 目录说明
+
 ## getopt
 
 * ./zipwalk
 * `-t` `--target_directory`, where to put the extracted files
 * `-f` `--file` zipfile path
 * `-v` `--version` print version number
-* `-h` `-?` `--help` print usage
+* `-?` `--help` print usage
+* `-h` human readable
 
 ## Thinking / TODO
 
@@ -28,6 +31,8 @@ make
 * date & time
 * base folder
 * zip32/zip64
+* getbyte, getword, getdword, getqword(little endian ?)
+* human readable? -h
 
 ## Refs
 

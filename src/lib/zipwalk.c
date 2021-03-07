@@ -2,6 +2,40 @@
 #include <zlib.h>
 #include "zipwalk.h"
 
+int getbyte(FILE *fin, u_int8_t *c) {;
+    if (fread(c, 1, 1, fin)) {
+        return 0;
+    }
+    return 1;
+}
+
+int getword(FILE *fin, u_int16_t *w) {
+    u_int8_t c;
+    if (getbyte(fin, &c)) return 1;
+    *w = c;
+    if (getbyte(fin, &c)) return 1;
+    *w |= (u_int16_t)(c) << 8;
+    return 0;
+}
+
+int getdword(FILE* fin, u_int32_t *dw) {
+    u_int16_t w;
+    if (getword(fin, &w)) return 1;
+    *dw = w;
+    if (getword(fin, &w)) return 1;
+    *dw |= (u_int32_t)(w) << 16;
+    return 0;
+}
+
+int getqword(FILE* fin, u_int64_t *qw) {
+    u_int32_t dw;
+    if (getdword(fin, &dw)) return 1;
+    *qw = dw;
+    if (getdword(fin, &dw)) return 1;
+    *qw |= (u_int64_t)(dw) << 32;
+    return 0;
+}
+
 // todo: run crc32 on inflated data
 // inflate as much as possible, and stop as soon as any error is encountered
 unsigned long my_inflate(FILE* fin, FILE* fout, unsigned char *src, unsigned long src_len, unsigned char *dst, unsigned long dst_len) {
