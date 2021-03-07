@@ -24,6 +24,7 @@ make
 * `-v` `--version` print version number
 * `-?` `--help` print usage
 * `-h` human readable
+* `-s` save files
 
 ## Thinking / TODO
 
@@ -33,6 +34,8 @@ make
 * zip32/zip64
 * getbyte, getword, getdword, getqword(little endian ?)
 * human readable? -h
+* mkdir, recursively
+* file / folder, date & time
 
 ## Refs
 

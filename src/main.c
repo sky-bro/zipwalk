@@ -13,12 +13,13 @@ struct option longopts[] = {{"version", no_argument, 0, 'v'},
                             {"help", no_argument, 0, 'h'},
                             {"target_path", required_argument, 0, 't'},
                             {"file", required_argument, 0, 'f'},
+                            {"save-file", no_argument, 0, 's'},
                             {0, 0, 0, 0}};
 
 const char* program_name;
 
 void printUsage() {
-  printf("Usage: %s [-vh] [-t target_path] -f <zip_path>\n", program_name);
+  printf("Usage: %s [-vsh] [-t target_path] -f <zip_path>\n", program_name);
 }
 
 FILE* fin = NULL;
@@ -30,7 +31,7 @@ int parse_args(int argc, char *const argv[]) {
   int c;
   char *zip_path = NULL, *target_path = NULL;
   char target_path_buf[256];
-  while ((c = getopt_long(argc, argv, "vht:f:", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "vhst:f:", longopts, NULL)) != -1) {
     switch (c) {
       case 'v':
         printf("zipwalk - version %d.%d\n", VERSION_MAJOR, VERSION_MINOR);
@@ -45,6 +46,9 @@ int parse_args(int argc, char *const argv[]) {
       case 'f':
         printf("zip file: %s\n", optarg);
         zip_path = optarg;
+        break;
+      case 's':
+        save_file = 1;
         break;
       case 'h':
       default:

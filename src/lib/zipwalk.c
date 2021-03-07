@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <zlib.h>
+#include <stdlib.h>
 #include "zipwalk.h"
 
 int getbyte(FILE *fin, u_int8_t *c) {;
@@ -65,7 +66,7 @@ unsigned long my_inflate(FILE* fin, FILE* fout, unsigned char *src, unsigned lon
         // printf("[*] ret: %d\n", ret);
         len_in += sz - strm.avail_in;
         len_out += dst_len - strm.avail_out;
-        printf("[*] len_in: %lu, len_out: %lu\n", len_in, len_out);
+        // printf("[*] len_in: %lu, len_out: %lu\n", len_in, len_out);
         fwrite(dst, sizeof(unsigned char), dst_len - strm.avail_out, fout);
         if (ret != Z_OK) {
             break;
@@ -123,7 +124,75 @@ unsigned char dst[dst_len];
  * parse header information, and save files if save_file is non-zero
  */
 void parse_LFH(FILE* fin, int save_file) {
-    
+    u_int32_t dw;
+    u_int16_t w, method, name_len, extra_len;
+    char *filename = NULL;
+    FILE *fout = NULL;
+    long pos = ftell(fin);
+    if (getdword(fin, &dw)) return;
+    printf("[+] Local File Header (%#X) at offset %#X:\n", dw, pos);
+    if (getword(fin, &w)) return;
+    printf("\tversion to extract (minimum): %d\n", w);
+    if (getword(fin, &w)) return;
+    printf("\tgeneral purpose bit flag: %#X\n", w);
+    if (getword(fin, &method)) return;
+    printf("\tcompression method: %d\n", method);
+    // TODO: human readable time & date, set file time & date
+    if (getword(fin, &w)) return;
+    printf("\tFile last modification time: %d\n", w);
+    if (getword(fin, &w)) return;
+    printf("\tFile last modification date: %d\n", w);
+    if (getdword(fin, &dw)) return;
+    printf("\tCRC-32 of uncompressed data: %#X\n", dw);
+    if (getdword(fin, &dw)) return;
+    printf("\tCompressed size: %u byte(s)\n", dw);
+    if (getdword(fin, &dw)) return;
+    printf("\tUncompressed size: %u byte(s)\n", dw);
+    if (getword(fin, &name_len)) return;
+    printf("\tFile name length: %d\n", name_len);
+    if (getword(fin, &extra_len)) return;
+    printf("\tExtra field length: %d\n", name_len);
+    if (name_len == 0) return;
+    // ignore extra field for now
+    filename = malloc(name_len+1);
+    int sz = fread(filename, sizeof(char), name_len, fin);
+    if (sz != name_len || filename[0] == '/') { // filename cannot start with '/'
+        free(filename);
+        filename = NULL;
+        return;
+    }
+    filename[name_len] = 0;
+    printf("\tFile name: %s\n", filename);
+    // if extract files
+    if (save_file) {
+        printf("[+] creating %s\n", filename);
+        if (filename[name_len-1] == '/') { // is a folder
+            save_file = 0; // no save file for a folder
+        } else {
+            fout = fopen(filename, "wb");
+            free(filename);
+            filename = NULL;
+            if (!fout) {
+                // will fail when folders not created
+                perror("[-] fail to open file");
+                return;
+            }
+        }
+    } else {
+        free(filename);
+        filename = NULL;
+    }
+    // ignore extra filed for now, skip extra_len bytes
+    fseek(fin, extra_len, SEEK_CUR);
+    printf("\tExtra field: %d byte(s) skipped\n", extra_len);
+    if (save_file) {
+        if (method == 8) // deflate
+            my_inflate(fin, fout, src, src_len, dst, dst_len);
+        fclose(fout);
+    } else {
+        // do nothing...
+        // or skip filecontent?
+    }
 }
 
 void parse_EOCD(FILE* fin) {
