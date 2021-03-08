@@ -41,6 +41,10 @@ make
 * [ ] summary info
 * [ ] encrypted ?
 * [ ] .gz/.tar.gz files
+  * determine format of a file by its filename
+  * or one more argument `-e` `--extension` zip, tar, gzip
+  * `.tar.gz` `.tgz` `.gz`: do un-gzip, save file to `.tar`
+  * `.tar`: do un-tar
 
 ## Refs
 

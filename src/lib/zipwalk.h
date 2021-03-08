@@ -1,7 +1,13 @@
 #ifndef ZIPWALK_H__
 #define ZIPWALK_H__
 
+#define TAR_FILE 1
+#define GZIP_FILE 2
+#define ZIP_FILE 3
+
 #define MAX_PATH_LEN 256
+
+int get_filetype(const char *file_path);
 
 /**
  * mkdir a/b/c/d in current working directory
@@ -24,6 +30,8 @@ int getword(FILE *fin, u_int16_t *w);
 int getdword(FILE* fin, u_int32_t *dw);
 
 int getqword(FILE* fin, u_int64_t *qw);
+
+int getstr(FILE* fin, char *filename, int sz);
 
 /**
  * @returns number of deflate bytes got inflated
@@ -49,5 +57,9 @@ void parse_LFH(FILE* fin, int save_file);
 void parse_EOCD(FILE* fin);
 
 void parse_ODD(FILE* fin);
+
+int parse_GZIP_header(FILE* fin, int save_file);
+
+void parse_GZIP_footer(FILE* fin);
 
 #endif /* ZIPWALK_H__ */

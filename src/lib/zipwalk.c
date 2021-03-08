@@ -5,6 +5,18 @@
 #include <string.h>
 #include "zipwalk.h"
 
+int get_filetype(const char *file_path) {
+    int len = strlen(file_path);
+    if (len <= 3) return ZIP_FILE;
+    if (strcmp(file_path + (len - 3), ".gz") == 0) return GZIP_FILE;
+    if (len <= 4) return ZIP_FILE;
+    if (strcmp(file_path + (len - 4), ".tar") == 0) return TAR_FILE;
+    if (strcmp(file_path + (len - 4), ".tgz") == 0) return GZIP_FILE;
+    if (len <= 7) return ZIP_FILE;
+    if (strcmp(file_path + (len - 7), ".tar.gz") == 0) return GZIP_FILE;
+    return ZIP_FILE;
+}
+
 int my_mkdir(const char *path, const mode_t mode) { // path modifiable
     if (!path || !path[0]) {
         fprintf(stderr, "[-] <null> path detected!\n");
@@ -101,6 +113,17 @@ int getqword(FILE* fin, u_int64_t *qw) {
     return 0;
 }
 
+int getstr(FILE* fin, char *filename, int sz) {
+    int i = 0;
+    char c = fgetc(fin);
+    while (c && c != EOF && i < sz - 1) {
+        filename[i++] = c;
+        c = fgetc(fin);
+    }
+    filename[i] = 0;
+    return c; // if c != 0, return non-zero
+}
+
 // todo: run crc32 on inflated data
 // inflate as much as possible, and stop as soon as any error is encountered
 unsigned long my_inflate(FILE* fin, FILE* fout, unsigned char *src, unsigned long src_len, unsigned char *dst, unsigned long dst_len) {
@@ -155,6 +178,8 @@ unsigned long copy_n(FILE* fin, FILE* fout, unsigned long len) {
     }
     return ret - len - 1;
 }
+
+// ===================== ZIP =================
 
 #define BUF_SIZE 1024
 unsigned char buf[BUF_SIZE];
@@ -388,3 +413,69 @@ void parse_ODD(FILE* fin) {
     if (getdword(fin, &dw)) return;
     printf("\tUncompressed size: %u byte(s)\n", dw);
 }
+
+// ============== GZIP ================
+
+/**
+ * @returns 1 on success
+ */
+int parse_GZIP_header(FILE* fin, int save_file) {
+    u_int32_t dw;
+    u_int8_t method, flags, b;
+    u_int16_t w;
+    long pos = ftell(fin);
+    if (getword(fin, &w)) return 0;
+    if (w != 0x8B1F) {
+        fprintf(stderr, "[-] Wrong Magic: %#X, not a gzip file\n", w);
+        return 0;
+    }
+    printf("[+] GZIP Magic (%#X) at offset %#X:\n", w, pos);
+    if (getbyte(fin, &method)) return 0;
+    printf("\tCompression method: %d\n", method);
+    if (getbyte(fin, &flags)) return 0;
+    printf("\tFlags: %#X\n", flags);
+        printf("\t\tFLAG_ASCII_TEXT: %s\n", (flags & 1) ? "true" : "false");
+        printf("\t\tFLAG_CONTINUATION: %s\n", (flags & 2) ? "true" : "false");
+        printf("\t\tFLAG_EXTRA: %s\n", (flags & 4) ? "true" : "false");
+        printf("\t\tFLAG_NAME: %s\n", (flags & 8) ? "true" : "false");
+        printf("\t\tFLAG_COMMENT: %s\n", (flags & 16) ? "true" : "false");
+        printf("\t\tFLAG_ENCRYPTED: %s\n", (flags & 32) ? "true" : "false");
+    if (getdword(fin, &dw)) return 0;
+    printf("\tModification time: %u\n", dw);
+    if (getbyte(fin, &b)) return 0;
+    printf("\tExtra flags: %#X\n", b);
+    if (getbyte(fin, &b)) return 0;
+    printf("\tOperating system: %#X\n", b);
+    // ----- optional, depends on `flags` ------
+    // filename
+    char filename[MAX_PATH_LEN] = "out.un-gzip";
+    if (flags & 8) { // has name field
+        if (getstr(fin, filename, MAX_PATH_LEN)) return 0;
+    }
+    // comment
+    // TODO
+    // extra
+    // TODO
+    // lower half of header checksum
+    // TODO
+    if (!save_file) return 1;
+    FILE* fout = fopen(filename, "wb");
+    if (!fout) {
+        perror("[-] fail to open file");
+        return 0;
+    }
+    my_inflate(fin, fout, src, src_len, dst, dst_len);
+    fclose(fout);
+    fout = NULL;
+    return 1;
+}
+
+void parse_GZIP_footer(FILE* fin) {
+    fseek(fin, 8, SEEK_END);
+    u_int32_t dw;
+    if (getdword(fin, &dw)) return;
+    printf("\tChecksum: %x\n", dw);
+    if (getdword(fin, &dw)) return;
+    printf("\tUncompressed size: %u byte(s)\n", dw);
+}
+
