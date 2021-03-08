@@ -81,6 +81,9 @@ int parse_args(int argc, char *const argv[]) {
     p[1] = 0;
     chdir(zip_path);
   }
+  char buf[MAX_PATH_LEN];
+  printf("[*] target directory: %s\n", getcwd(buf, MAX_PATH_LEN));
+  return 0;
 }
 
 int main(int argc, char *const argv[]) {

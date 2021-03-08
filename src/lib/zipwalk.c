@@ -142,6 +142,20 @@ unsigned long my_inflate(FILE* fin, FILE* fout, unsigned char *src, unsigned lon
     return len_in;
 }
 
+unsigned long copy_n(FILE* fin, FILE* fout, unsigned long len) {
+    char c = fgetc(fin);
+    unsigned long ret = len;
+    while (len--) {
+        if (c == EOF) {
+            fprintf(stderr, "EOF detected, %lu byte(s) not copyed\n", len);
+            break;
+        }
+        fputc(c, fout);
+        fgetc(fin);
+    }
+    return ret - len - 1;
+}
+
 #define BUF_SIZE 1024
 unsigned char buf[BUF_SIZE];
 int next_header(FILE* fin) {
@@ -252,7 +266,7 @@ unsigned char dst[dst_len];
  * parse header information, and save files if save_file is non-zero
  */
 void parse_LFH(FILE* fin, int save_file) {
-    u_int32_t dw;
+    u_int32_t dw, compressed_len, uncompressed_len;
     u_int16_t w, method, name_len, extra_len;
     char *filename = NULL;
     FILE *fout = NULL;
@@ -272,10 +286,10 @@ void parse_LFH(FILE* fin, int save_file) {
     printf("\tFile last modification date: %d\n", w);
     if (getdword(fin, &dw)) return;
     printf("\tCRC-32 of uncompressed data: %#X\n", dw);
-    if (getdword(fin, &dw)) return;
-    printf("\tCompressed size: %u byte(s)\n", dw);
-    if (getdword(fin, &dw)) return;
-    printf("\tUncompressed size: %u byte(s)\n", dw);
+    if (getdword(fin, &compressed_len)) return;
+    printf("\tCompressed size: %u byte(s)\n", compressed_len);
+    if (getdword(fin, &uncompressed_len)) return;
+    printf("\tUncompressed size: %u byte(s)\n", uncompressed_len);
     if (getword(fin, &name_len)) return;
     printf("\tFile name length: %d\n", name_len);
     if (getword(fin, &extra_len)) return;
@@ -317,6 +331,13 @@ void parse_LFH(FILE* fin, int save_file) {
     if (save_file) {
         if (method == 8) // deflate
             my_inflate(fin, fout, src, src_len, dst, dst_len);
+        else if (method == 0) { // stored
+            unsigned long pos = ftell(fin);
+            printf("[*] %lu of %lu byte(s) stored\n", copy_n(fin, fout, compressed_len), compressed_len);
+            fseek(fin, pos, SEEK_SET);
+        } else {
+            printf("[-] method [%d] is not supported yet\n", method);
+        }
         fclose(fout);
     } else {
         // do nothing...

@@ -30,6 +30,8 @@ int getqword(FILE* fin, u_int64_t *qw);
  */
 unsigned long my_inflate(FILE* fin, FILE* fout, unsigned char *src, unsigned long src_len, unsigned char *dst, unsigned long dst_len);
 
+unsigned long copy_n(FILE* fin, FILE* fout, unsigned long len);
+
 #define CDFH 1  // Central directory file header 
 #define LFH 3   // Local file header
 #define EOCD 5  // End of central directory
