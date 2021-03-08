@@ -35,7 +35,7 @@ int parse_args(int argc, char *const argv[]) {
     switch (c) {
       case 'v':
         printf("zipwalk - version %d.%d\n", VERSION_MAJOR, VERSION_MINOR);
-        return 0;
+        exit(0);
         break;
       case 't':
         // printf("target_path: %s\n", optarg);

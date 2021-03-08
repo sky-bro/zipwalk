@@ -22,23 +22,30 @@ make
 * `-t` `--target_directory`, where to put the extracted files
 * `-f` `--file` zipfile path
 * `-v` `--version` print version number
-* `-?` `--help` print usage
-* `-h` human readable
-* `-s` save files
+* `-h` `--help` print usage
+* `-s` `--save-file` save files
 
 ## Thinking / TODO
 
-* in local file header, filename: folders? files? -- check whether ends with '/' or not
+* [x] in local file header, filename: folders? files? -- check whether ends with '/' or not
 * date & time
-* base folder
-* zip32/zip64
-* getbyte, getword, getdword, getqword(little endian ?)
+* [x] base folder
+* [ ] zip32/zip64
+* [x] getbyte, getword, getdword, getqword(little endian ?)
 * human readable? -h
-* mkdir, recursively
-* file / folder, date & time
+* [x] mkdir, recursively
+* [x] file / folder
+* other compression method
+  * [x] stored
+  * [x] deflate
+* [ ] summary info
+* [ ] encrypted ?
+* [ ] .gz/.tar.gz files
 
 ## Refs
 
 * [wiki: ZIP (file format)](https://en.wikipedia.org/wiki/ZIP_(file_format))
 * [ZIP压缩算法详细分析及解压实例解释](https://www.cnblogs.com/esingchan/p/3958962.html) 详细，从哈夫曼到deflate
+* [zip文件结构](https://www.jianshu.com/p/717373dd3188)
+* [zip文件解析](https://www.jianshu.com/p/e42b94967503)
 * [rfc1951](http://tools.ietf.org/html/rfc1951) (*deflate* format)
