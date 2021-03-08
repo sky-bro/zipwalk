@@ -1,7 +1,71 @@
 #include <stdio.h>
 #include <zlib.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <string.h>
 #include "zipwalk.h"
+
+int my_mkdir(const char *path, const mode_t mode) { // path modifiable
+    if (!path || !path[0]) {
+        fprintf(stderr, "[-] <null> path detected!\n");
+        return 1;
+    }
+    if (path[0] == '/') {
+        fprintf(stderr, "[-] path cannot start with '/'\n");
+        return 1;
+    }
+    int len = strnlen(path, MAX_PATH_LEN);
+    if (len > MAX_PATH_LEN) {
+        fprintf(stderr, "[-] path is too long, MAX_PATH_LEN: %d\n", MAX_PATH_LEN);
+        return 1;
+    }
+    char tmp[MAX_PATH_LEN+2]; // "/\0"
+    strncpy(tmp, path, MAX_PATH_LEN);
+    if (tmp[len-1] != '/') tmp[len] = '/', tmp[len+1] = 0;
+    else tmp[len] = 0;
+    struct stat s;
+    for (char *p = tmp; *p; ++p) {
+        if (*p == '/') {
+            *p = 0;
+            if (stat(path, &s)) { // not exist
+                if (mkdir(path, mode) < 0) {
+                    perror("[-] mkdir error");
+                    return 1;
+                }
+            } else if (!S_ISDIR(s.st_mode)) { // exist, but not directory
+                fprintf(stderr, "[-] %s is ont a folder!\n", tmp);
+                return 1;
+            }
+            *p = '/';
+        }
+    }
+    return 0;
+}
+
+int mkbdir(const char *path, const mode_t mode) {
+    if (!path || path[0] == 0) {
+        fprintf(stderr, "[-] <null> path detected!\n");
+        return 1;
+    }
+    if (path[0] == '/') {
+        fprintf(stderr, "[-] path cannot start with '/'\n");
+        return 1;
+    }
+    char *p = strrchr(path, '/');
+    if (!p) {
+        // in current folder, no need to mkdir
+        return 0;
+    }
+    char tmp[MAX_PATH_LEN];
+    int len = p - path + 1;
+    if (len >= MAX_PATH_LEN) {
+        fprintf(stderr, "[-] path is too long, MAX_PATH_LEN: %d\n", MAX_PATH_LEN);
+        return 1;
+    }
+    strncpy(tmp, path, len);
+    tmp[len] = 0;
+    return my_mkdir(tmp, mode);
+}
 
 int getbyte(FILE *fin, u_int8_t *c) {;
     if (fread(c, 1, 1, fin)) {
@@ -72,7 +136,7 @@ unsigned long my_inflate(FILE* fin, FILE* fout, unsigned char *src, unsigned lon
             break;
         }
     }
-    printf("[+] %lu bytes inflated to %lu bytes\n", len_in, len_out);
+    printf("[*] %lu bytes inflated to %lu bytes\n", len_in, len_out);
     (void)inflateEnd(&strm);
     fseek(fin, -(len_in + strm.avail_in), SEEK_CUR);
     return len_in;
@@ -229,10 +293,12 @@ void parse_LFH(FILE* fin, int save_file) {
     printf("\tFile name: %s\n", filename);
     // if extract files
     if (save_file) {
-        printf("[+] creating %s\n", filename);
+        printf("[*] creating %s\n", filename);
         if (filename[name_len-1] == '/') { // is a folder
+            my_mkdir(filename, 0777);
             save_file = 0; // no save file for a folder
         } else {
+            mkbdir(filename, 0777);
             fout = fopen(filename, "wb");
             if (!fout) {
                 // will fail when folders not created

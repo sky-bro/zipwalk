@@ -1,6 +1,22 @@
 #ifndef ZIPWALK_H__
 #define ZIPWALK_H__
 
+#define MAX_PATH_LEN 256
+
+/**
+ * mkdir a/b/c/d in current working directory
+ * @param path the path to mkdir
+ * @param mode 0777
+ * @returns 0 on success
+ */
+int my_mkdir(const char *path, const mode_t mode);
+
+/**
+ * make basedir of path
+ * @returns 0 on success
+ */
+int mkbdir(const char *path, const mode_t mode);
+
 int getbyte(FILE *fin, u_int8_t *c);
 
 int getword(FILE *fin, u_int16_t *w);
