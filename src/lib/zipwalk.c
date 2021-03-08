@@ -5,6 +5,8 @@
 #include <string.h>
 #include "zipwalk.h"
 
+const char *typename[] = {"", "tar", "gzip", "zip"};
+
 int get_filetype(const char *file_path) {
     int len = strlen(file_path);
     if (len <= 3) return ZIP_FILE;

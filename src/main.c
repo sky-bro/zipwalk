@@ -27,6 +27,7 @@ FILE* fin = NULL;
 int save_file = 0; // will save files or just extract headers
 int custom_filetype = 0;
 int filetype = ZIP_FILE; // default to zip file type
+extern const char *typename[4];
 
 int parse_args(int argc, char *const argv[]) {
   program_name = argv[0];
@@ -34,7 +35,7 @@ int parse_args(int argc, char *const argv[]) {
   int c;
   char *file_path = NULL, *target_path = NULL;
   char target_path_buf[256];
-  while ((c = getopt_long(argc, argv, "vhst:f:", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "vhse:t:f:", longopts, NULL)) != -1) {
     switch (c) {
       case 'v':
         printf("zipwalk - version %d.%d\n", VERSION_MAJOR, VERSION_MINOR);
@@ -47,7 +48,7 @@ int parse_args(int argc, char *const argv[]) {
         target_path = optarg;
         break;
       case 'f':
-        printf("zip file: %s\n", optarg);
+        printf("[*] filepath: %s\n", optarg);
         file_path = optarg;
         break;
       case 's':
@@ -78,7 +79,7 @@ int parse_args(int argc, char *const argv[]) {
     fprintf(stderr, "%s is not a regular file.\n", file_path);
     return 1;
   }
-  if (custom_filetype) filetype = get_filetype(file_path);
+  if (!custom_filetype) filetype = get_filetype(file_path);
   fin = fopen(file_path, "rb");
   if (!fin) {
     perror("open file_path error");
@@ -113,7 +114,7 @@ int main(int argc, char *const argv[]) {
   }
 
   fseek(fin, 0, SEEK_END);
-  printf("[*] file size: %ld bytes\n", ftell(fin));
+  printf("[*] parsing %s file, file size: %ld bytes\n", typename[filetype], ftell(fin));
   rewind(fin);
 
   int ret;

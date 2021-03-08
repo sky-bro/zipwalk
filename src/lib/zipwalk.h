@@ -5,6 +5,8 @@
 #define GZIP_FILE 2
 #define ZIP_FILE 3
 
+extern const char *typename[];
+
 #define MAX_PATH_LEN 256
 
 int get_filetype(const char *file_path);
