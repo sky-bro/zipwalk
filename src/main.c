@@ -38,7 +38,7 @@ int parse_args(int argc, char *const argv[]) {
         return 0;
         break;
       case 't':
-        printf("target_path: %s\n", optarg);
+        // printf("target_path: %s\n", optarg);
         // ignore this for now, always extract xxx/filename.zip to xx/filename/ folder
         // xxx/filename to xxx/ folder
         target_path = optarg;
@@ -75,14 +75,23 @@ int parse_args(int argc, char *const argv[]) {
     return 1;
   }
 
-  // mkdir, chdir
-  char *p = strrchr(zip_path, '/');
-  if (p) {
-    p[1] = 0;
-    chdir(zip_path);
+  // mkdir, chdir to target_path
+  if (target_path) {
+    if (my_mkdir(target_path, 0777)) {
+      fclose(fin);
+      fin = NULL;
+      return 1;
+    }
+    chdir(target_path);
+  } else {
+    char *p = strrchr(zip_path, '/');
+    if (p) {
+      p[1] = 0;
+      chdir(zip_path);
+    }
   }
   char buf[MAX_PATH_LEN];
-  printf("[*] target directory: %s\n", getcwd(buf, MAX_PATH_LEN));
+  printf("[*] now in directory: %s\n", getcwd(buf, MAX_PATH_LEN));
   return 0;
 }
 
@@ -116,5 +125,6 @@ int main(int argc, char *const argv[]) {
       break;
     }
   }
+  fclose(fin);
   return 0;
 }
