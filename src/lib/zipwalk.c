@@ -41,8 +41,8 @@ int my_mkdir(const char *path, const mode_t mode) { // path modifiable
     for (char *p = tmp; *p; ++p) {
         if (*p == '/') {
             *p = 0;
-            if (stat(path, &s)) { // not exist
-                if (mkdir(path, mode) < 0) {
+            if (stat(tmp, &s)) { // not exist
+                if (mkdir(tmp, mode) < 0) {
                     perror("[-] mkdir error");
                     return 1;
                 }
