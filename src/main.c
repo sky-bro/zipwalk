@@ -11,7 +11,7 @@
 
 struct option longopts[] = {{"version", no_argument, 0, 'v'},
                             {"help", no_argument, 0, 'h'},
-                            {"target_path", required_argument, 0, 't'},
+                            {"target-path", required_argument, 0, 't'},
                             {"file", required_argument, 0, 'f'},
                             {"save-file", no_argument, 0, 's'},
                             {"extension", required_argument, 0, 'e'},
@@ -20,7 +20,16 @@ struct option longopts[] = {{"version", no_argument, 0, 'v'},
 const char* program_name;
 
 void printUsage() {
-  printf("Usage: %s [-vsh] [-t target_path] -f <file_path>\n", program_name);
+  printf("zipwalk - parse damaged zip files.\n\n");
+  printf("usage: %s [-vsh] [-e extension] [-t target_path] -f <file_path>\n\n", program_name);
+  printf("  -v, --version   \tprint version number and exit\n" \
+         "  -s, --save-file \twill save files to target path\n" \
+         "  -h, --help      \tdisplay help message and exit\n" \
+         "  -e, --extension \tparse file as a zip/gzip/tar, ignore the suffix of filename\n" \
+         "  -t, --target-path \twhere extracted files will be saved to\n" \
+         "  -f, --file      \tthe path of file to be parsed\n"\
+  );
+  printf("\n");
 }
 
 FILE* fin = NULL;
@@ -103,7 +112,7 @@ int parse_args(int argc, char *const argv[]) {
     }
   }
   char buf[MAX_PATH_LEN];
-  printf("[*] now in directory: %s\n", getcwd(buf, MAX_PATH_LEN));
+  printf("[*] target-path: %s\n", getcwd(buf, MAX_PATH_LEN));
   return 0;
 }
 

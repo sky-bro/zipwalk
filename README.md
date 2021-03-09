@@ -1,13 +1,17 @@
 # zipwalk
 
-## Build
+## Build and install
 
 ```shell
 mkdir build
 cd build
-cmake ../src
-make
+# default value of ${CMAKE_INSTALL_PREFIX} is "/usr/local"
+cmake ../src # cmake -DCMAKE_INSTALL_PREFIX=~/.local/ ../src/
+make # compile
+make install # install zipwalk to ${CMAKE_INSTALL_PREFIX}/bin/zipwalk
 ```
+
+> to uninstall, just delete the file: `rm zipwalk`
 
 ## Run
 

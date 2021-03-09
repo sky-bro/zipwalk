@@ -22,3 +22,7 @@ add_executable(zipwalk main.c)
 target_link_libraries(zipwalk PUBLIC zipwalk-core ZLIB::ZLIB)
 
 target_include_directories(zipwalk PUBLIC ${PROJECT_BINARY_DIR})
+
+message(${CMAKE_INSTALL_PREFIX}) # /usr/local
+
+install(TARGETS zipwalk RUNTIME DESTINATION bin)
