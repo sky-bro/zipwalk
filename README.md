@@ -1,5 +1,9 @@
 # zipwalk
 
+![cmake status](https://github.com/sky-bro/zipwalk/actions/workflows/cmake.yaml/badge.svg)
+
+A CLI tool to parse damaged zip files.
+
 ## Build and install
 
 ```shell
@@ -13,12 +17,16 @@ make install # install zipwalk to ${CMAKE_INSTALL_PREFIX}/bin/zipwalk
 
 > to uninstall, just delete the file: `rm zipwalk`
 
+### Arch User
+
+```shell
+yay -Sy zipwalk
+```
+
 ## Run
 
 * `zipwalk`: `./zipwalk -f ../samples/123.zip`
 * `test-my_inflate`: `./test/test-my_inflate ../samples/123.deflate 123.txt`
-
-## 目录说明
 
 ## getopt
 
@@ -28,6 +36,7 @@ make install # install zipwalk to ${CMAKE_INSTALL_PREFIX}/bin/zipwalk
 * `-v` `--version` print version number
 * `-h` `--help` print usage
 * `-s` `--save-file` save files
+* `-e` `--extension` parse file as a zip/gzip/tar, ignore the suffix of filename
 
 ## Thinking / TODO
 
